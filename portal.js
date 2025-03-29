@@ -8,7 +8,7 @@ export function createPortal(scene, position, colorHex, labelText = 'PORTAL') {
     const portalGroup = new THREE.Group();
     portalGroup.position.copy(position);
     // portalGroup.rotation.x = 0.35; // Optional initial rotation
-    // portalGroup.rotation.y = 0;
+    // portalGroup.rotation.y = 0; // Example rotation removed for simplicity, can be added back
 
     const portalColor = new THREE.Color(colorHex);
 
@@ -98,17 +98,16 @@ export function createPortal(scene, position, colorHex, labelText = 'PORTAL') {
     portalGroup.add(particleSystem);
 
 
-    // Add portal group to scene
-    scene.add(portalGroup);
+    // Add portal group to scene - The caller (main.js) will do this
+    // scene.add(portalGroup);
 
-    // Create portal collision box (slightly larger for easier entry)
-    // We update this once after adding to the scene to get world dimensions
-    let portalBox;
-    setTimeout(() => { // Delay calculation slightly to ensure transforms are applied
-        portalBox = new THREE.Box3().setFromObject(portalGroup, true); // Use true for precise box
-        // Optional: Expand the box slightly if needed
-        // portalBox.expandByScalar(0.5);
-    }, 100);
+    // Create portal collision box - The caller (main.js) will do this after adding to scene
+    // let portalBox;
+    // setTimeout(() => { // Delay calculation slightly to ensure transforms are applied - REMOVED
+    //     portalBox = new THREE.Box3().setFromObject(portalGroup, true); // Use true for precise box
+    //     // Optional: Expand the box slightly if needed
+    //     // portalBox.expandByScalar(0.5);
+    // }, 100);
 
 
     // Animate particles (can be expanded)
@@ -118,21 +117,27 @@ export function createPortal(scene, position, colorHex, labelText = 'PORTAL') {
 
         for (let i = 0; i < particleCount * 3; i += 3) {
             // Simple vertical oscillation example
-             posArray[i + 2] += Math.sin(time + i) * 0.01; // Adjust vertical position
+             posArray[i + 2] += Math.sin(time + i * 0.1) * 0.005; // Adjust vertical position, slowed down
+             // Simple radial oscillation
+             const currentRadius = Math.sqrt(posArray[i]**2 + posArray[i+1]**2);
+             const scale = 1 + Math.sin(time * 2 + i * 0.05) * 0.01; // Slight pulsing
+             posArray[i] = posArray[i] / currentRadius * baseRadius * scale;
+             posArray[i+1] = posArray[i+1] / currentRadius * baseRadius * scale;
         }
         particles.attributes.position.needsUpdate = true;
 
         // Rotate the particle system itself for a swirling effect
         particleSystem.rotation.z = time * 0.5;
 
-        requestAnimationFrame(animatePortalParticles); // Keep animation loop running
+        // Don't use requestAnimationFrame here; main loop controls animation calls
+        // requestAnimationFrame(animatePortalParticles);
     }
     // Don't start animation loop here - let the main loop handle animation calls if needed
     // Or start it if you want independent portal animation:
     // animatePortalParticles();
 
 
-    // Return the group and its collision box
-    return { group: portalGroup, box: portalBox, animate: animatePortalParticles }; // Return box which will be calculated shortly
+    // Return the group and its animation function
+    // The collision box will be calculated in main.js after adding the group to the scene
+    return { group: portalGroup, animate: animatePortalParticles };
 }
-
